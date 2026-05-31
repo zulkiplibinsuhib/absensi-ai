@@ -29,24 +29,29 @@ openpyxl==3.1.2
 **1. Manajemen Data Siswa**
 Tambah, edit, dan hapus data siswa
 Informasi: NIS, Nama, Kelas
+
 **2. Capture Wajah**
 Ambil sampel wajah siswa melalui webcam browser
 Penyimpanan otomatis ke folder dataset/{id_siswa}/
 Minimal 10 foto per siswa untuk hasil optimal
+
 **3. Training Model AI**
 Latih model dengan data wajah yang sudah dikumpulkan
 Status training real-time
 Auto-restart proses absensi setelah training
+
 **4. Absensi Otomatis**
 Deteksi wajah real-time melalui kamera
 Pencatatan kehadiran otomatis ke database
 Anti-spam (30 detik per siswa)
 Log aktivitas lengkap
+
 **5. Laporan Absensi**
 Filter berdasarkan tanggal
 Export ke Excel/CSV
 Hapus data per tanggal atau semua
 Statistik kehadiran
+
 **6. Dashboard Monitoring**
 Total siswa, hadir hari ini, total absensi
 Log aktivitas terbaru
