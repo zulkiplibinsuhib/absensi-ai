@@ -51,11 +51,13 @@ id	INTEGER (PK)	ID otomatis
 nis	VARCHAR(20)	Nomor Induk Siswa
 nama	VARCHAR(100)	Nama lengkap
 kelas	VARCHAR(50)	Kelas siswa
+
 **Tabel absensi**
 id	INTEGER (PK)	ID otomatis
 siswa_id	INTEGER (FK)	Referensi ke siswa.id
 tanggal	VARCHAR(20)	Tanggal absensi (YYYY-MM-DD)
 jam	VARCHAR(20)	Jam absensi (HH:MM:SS)
+
 **Tabel log_absensi**
 id	INTEGER (PK)	ID otomatis
 pesan	VARCHAR(255)	Pesan log
@@ -92,6 +94,7 @@ NIS: Nomor Induk Siswa
 Nama: Nama lengkap siswa
 Kelas: Kelas siswa (contoh: X-RPL-1)
 Klik Simpan
+
 **2.Mengambil Sampel Wajah**
 Syarat:
 Minimal 10-20 foto per siswa
@@ -105,6 +108,7 @@ Posisikan wajah di tengah frame
 Klik Capture Wajah (ulangi 10-20 kali)
 Perhatikan jumlah foto yang tersimpan
 Klik Kembali jika selesai
+
 **3. Melatih Model AI**
 Langkah-langkah:
 Buka menu Data Siswa
@@ -116,6 +120,7 @@ Info:
 Training hanya untuk siswa dengan foto ≥ 10
 Model tersimpan di folder models/
 Proses absensi akan otomatis restart dengan model baru
+
 **4. Menjalankan Absensi**
 Langkah-langkah:
 Kembali ke Dashboard
@@ -127,6 +132,7 @@ Aturan Absensi:
 Wajah harus terdaftar dalam model
 Satu siswa hanya bisa absen setiap 30 detik
 Absensi dicatat dengan tanggal dan jam saat itu
+
 **5. Melihat Laporan**
 Langkah-langkah:
 Buka menu Laporan Absensi
@@ -138,6 +144,7 @@ Filter berdasarkan tanggal
 Export ke Excel (semua data atau per tanggal)
 Hapus per hari atau semua data
 Statistik total absensi
+
 **6. Monitoring Dashboard**
 Informasi yang ditampilkan:
 Status Mesin Absensi: Running / Tidak Berjalan
