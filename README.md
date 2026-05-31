@@ -60,42 +60,70 @@ Status mesin absensi (running/stop)
 # Struktur Database 
 **Tabel siswa**
 id	INTEGER (PK)	ID otomatis
+
 nis	VARCHAR(20)	Nomor Induk Siswa
+
 nama	VARCHAR(100)	Nama lengkap
+
 kelas	VARCHAR(50)	Kelas siswa
 
 **Tabel absensi**
 id	INTEGER (PK)	ID otomatis
+
 siswa_id	INTEGER (FK)	Referensi ke siswa.id
+
 tanggal	VARCHAR(20)	Tanggal absensi (YYYY-MM-DD)
+
 jam	VARCHAR(20)	Jam absensi (HH:MM:SS)
 
 **Tabel log_absensi**
 id	INTEGER (PK)	ID otomatis
+
 pesan	VARCHAR(255)	Pesan log
+
 waktu	VARCHAR(30)	Waktu kejadian
+
 
 # Struktur Project
 absensi-ai/
 ├── app.py                 # Aplikasi utama Flask
+
 ├── train.py              # Training model AI
+
 ├── absensi_ai.py         # Proses absensi real-time
+
 ├── requirements.txt      # Dependencies
+
 ├── dataset/              # Data wajah siswa
+
 │   ├── 1/               # Folder ID siswa
+
 │   │   ├── face_1.jpg
+
 │   │   └── ...
+
 │   └── 2/
+
 ├── models/               # Model AI yang sudah dilatih
+
 │   ├── trainer.yml
+
 │   └── label_map.npy
+
 ├── instance/             # Database SQLite
+
 │   └── absensi.db
+
 └── templates/            # Template HTML
+
     ├── index.html
+    
     ├── siswa.html
+    
     ├── kamera.html
+    
     └── laporan.html
+    
 
 # Panduan Penggunaan
 **1. Menambahkan Data Siswa**
