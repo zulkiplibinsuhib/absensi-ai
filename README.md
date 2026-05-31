@@ -171,6 +171,9 @@ Rekam Foto
 Laporan 
 <img width="1906" height="977" alt="image" src="https://github.com/user-attachments/assets/8a3a6143-4082-44ac-851e-061b272a7f33" />
 
+Absensi
+<img width="1917" height="982" alt="image" src="https://github.com/user-attachments/assets/999b2da7-78c1-4b9b-934e-ad4ef97d4414" />
+
 
 
 
