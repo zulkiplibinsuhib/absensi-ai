@@ -10,12 +10,19 @@ Kamera: WebRTC (JavaScript) & OpenCV (Python)
 
 # Python Dependencies:
 Flask==2.3.3
+
 Flask-SQLAlchemy==3.0.5
+
 opencv-python==4.8.1.78
+
 opencv-contrib-python==4.8.1.78
+
 numpy==1.24.3
+
 Pillow==10.0.0
+
 pandas==2.0.3
+
 openpyxl==3.1.2
 
 # Fitur Utama
