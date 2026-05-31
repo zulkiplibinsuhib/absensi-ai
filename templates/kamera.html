@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ambil Wajah - {{ siswa.nama }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        #video {
+            border: 2px solid #333;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .btn-back {
+            background-color: #666;
+        }
+        .btn-back:hover {
+            background-color: #555;
+        }
+        .btn-train {
+            background-color: #ff9800;
+        }
+        .btn-train:hover {
+            background-color: #e68900;
+        }
+        #jumlah {
+            font-size: 18px;
+            color: #4CAF50;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .info {
+            background-color: #e7f3ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>📸 Ambil Wajah - {{ siswa.nama }}</h2>
+    
+    <video
+        id="video"
+        width="640"
+        height="480"
+        autoplay>
+    </video>
+    
+    <br><br>
+    
+    <button onclick="capture()">
+        📷 Capture Wajah
+    </button>
+    
+    <button onclick="window.location.href='/siswa'" class="btn-back">
+        ⬅️ Kembali
+    </button>
+    
+    
+    
+    <p id="jumlah">
+        📊 Foto tersimpan : 0
+    </p>
+    
+    <div class="info">
+        💡 <strong>Tips:</strong><br>
+        - Ambil minimal 10-20 foto dari berbagai sudut<br>
+        - Pastikan pencahayaan cukup<br>
+        - Ekspresi wajah natural<br>
+        - Jangan pakai kacamata hitam
+    </div>
+    
+    <div id="message" style="margin-top: 10px;"></div>
+</div>
+
+<script>
+let total = 0;
+
+// Load jumlah foto yang sudah ada
+function loadPhotoCount() {
+    fetch(`/get_photo_count/{{ siswa.id }}`)
+        .then(res => res.json())
+        .then(data => {
+            total = data.count;
+            document.getElementById("jumlah").innerHTML = 
+                "📊 Foto tersimpan : " + total;
+        });
+}
+
+// Akses kamera
+navigator.mediaDevices
+.getUserMedia({ video: true })
+.then(stream => {
+    document.getElementById("video").srcObject = stream;
+})
+.catch(err => {
+    console.error("Error:", err);
+    document.getElementById("message").innerHTML = 
+        '<span class="error">❌ Gagal mengakses kamera. Pastikan izin diberikan.</span>';
+});
+
+function showMessage(msg, isError = false) {
+    const msgDiv = document.getElementById("message");
+    msgDiv.innerHTML = `<span class="${isError ? 'error' : 'success'}">${msg}</span>`;
+    setTimeout(() => {
+        msgDiv.innerHTML = '';
+    }, 3000);
+}
+
+function capture(){
+    let video = document.getElementById("video");
+    let canvas = document.createElement("canvas");
+    canvas.width = 640;
+    canvas.height = 480;
+    let ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, 640, 480);
+    let image = canvas.toDataURL("image/jpeg");
+    
+    showMessage("⏳ Menyimpan foto...");
+    
+    fetch("/simpan_wajah", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            siswa_id: {{ siswa.id }},
+            image: image
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+            total = data.total;
+            document.getElementById("jumlah").innerHTML = 
+                "📊 Foto tersimpan : " + total;
+            showMessage(`✅ ${data.message}`);
+        } else {
+            showMessage(`❌ ${data.message}`, true);
+        }
+    })
+    .catch(err => {
+        console.error("Error:", err);
+        showMessage("❌ Terjadi kesalahan", true);
+    });
+}
+
+
+// Load initial count
+loadPhotoCount();
+</script>
+
+</body>
+</html>

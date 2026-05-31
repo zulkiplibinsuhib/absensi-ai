@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Absensi AI</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+
+        body{
+            background:#f4f6f9;
+        }
+
+        .dashboard-header{
+            background:linear-gradient(135deg,#0d6efd,#0dcaf0);
+            color:white;
+            border-radius:15px;
+            padding:30px;
+            margin-bottom:25px;
+        }
+
+        .stat-card{
+            border:none;
+            border-radius:15px;
+            transition:.3s;
+        }
+
+        .stat-card:hover{
+            transform:translateY(-5px);
+        }
+
+        .stat-number{
+            font-size:40px;
+            font-weight:bold;
+        }
+
+        .menu-btn{
+            height:65px;
+            font-size:20px;
+            font-weight:600;
+        }
+        
+        .log-container {
+            max-height: 500px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        .log-container.collapsed {
+            max-height: 200px;
+            overflow-y: hidden;
+            position: relative;
+        }
+        
+        .log-container.collapsed::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, transparent, white);
+            pointer-events: none;
+        }
+        
+        .btn-toggle-log {
+            transition: all 0.3s ease;
+        }
+        
+        .btn-toggle-log:hover {
+            transform: scale(1.05);
+        }
+        
+        .log-item {
+            transition: all 0.2s ease;
+        }
+        
+        .log-item:hover {
+            background-color: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .badge-log {
+            font-size: 0.8em;
+        }
+        
+        .log-time {
+            font-family: monospace;
+            font-size: 0.85em;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .log-item {
+            animation: slideDown 0.3s ease-out;
+        }
+
+    </style>
+
+</head>
+<body>
+
+<div class="container py-4">
+
+    <div class="dashboard-header shadow">
+
+        <h1>🤖 Sistem Absensi AI</h1>
+
+        <p class="mb-0">
+            Absensi Otomatis Menggunakan Pengenalan Wajah
+        </p>
+
+    </div>
+
+    {% if status_absensi %}
+
+    <div class="alert alert-success shadow-sm">
+        🟢 Mesin Absensi Sedang Berjalan
+    </div>
+
+    {% else %}
+
+    <div class="alert alert-danger shadow-sm">
+        🔴 Mesin Absensi Tidak Berjalan
+    </div>
+
+    {% endif %}
+    
+    <div class="card shadow mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                📢 Aktivitas Absensi Terbaru
+                <span class="badge bg-secondary ms-2" id="logCount">{{ logs|length }} log</span>
+            </div>
+            <div>
+                <select id="filterTanggalLog" class="form-select form-select-sm d-inline-block w-auto me-2" style="width: auto;">
+                    <option value="">Semua tanggal</option>
+                    {% for date in unique_dates %}
+                        <option value="{{ date }}">{{ date }}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn btn-sm btn-warning btn-toggle-log me-2" onclick="hapusLogPerTanggal()">
+                    🗑️ Hapus per Tanggal
+                </button>
+                <button class="btn btn-sm btn-danger btn-toggle-log me-2" onclick="hapusSemuaLog()">
+                    🗑️ Hapus Semua
+                </button>
+                <button class="btn btn-sm btn-primary btn-toggle-log" onclick="toggleLog()">
+                    <span id="toggleIcon">▲</span> Sembunyikan
+                </button>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+    
+            {% if logs %}
+    
+                <div class="log-container" id="logContainer">
+                    <ul class="list-group list-group-flush" id="logList">
+    
+                        {% for log in logs %}
+    
+                        <li class="list-group-item log-item" data-log-id="{{ log.id }}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <strong class="log-time">⏰ {{ log.waktu }}</strong>
+                                    <br>
+                                    <span class="log-message">{{ log.pesan }}</span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-info badge-log ms-2">#{{ loop.index }}</span>
+                                    <button class="btn btn-sm btn-outline-danger ms-2" onclick="hapusLog({{ log.id }})" style="font-size: 10px; padding: 2px 6px;">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+    
+                        {% endfor %}
+    
+                    </ul>
+                </div>
+                
+                <!-- Tombol load more jika perlu -->
+                {% if logs|length > 2 %}
+                <div class="text-center py-2" id="loadMoreBtn" style="display: none;">
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadMoreLogs()">
+                        🔄 Load More Logs
+                    </button>
+                </div>
+                {% endif %}
+    
+            {% else %}
+    
+                <div class="alert alert-secondary m-3">
+                    Belum ada aktivitas absensi.
+                </div>
+    
+            {% endif %}
+    
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+
+        <div class="col-md-4">
+
+            <div class="card stat-card shadow">
+
+                <div class="card-body text-center">
+
+                    <h5>Total Siswa</h5>
+
+                    <div class="stat-number text-primary">
+                        {{ jumlah_siswa }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card stat-card shadow">
+
+                <div class="card-body text-center">
+
+                    <h5>Hadir Hari Ini</h5>
+
+                    <div class="stat-number text-success">
+                        {{ hadir_hari_ini }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card stat-card shadow">
+
+                <div class="card-body text-center">
+
+                    <h5>Total Absensi</h5>
+
+                    <div class="stat-number text-info">
+                        {{ total_absensi }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow mt-4">
+
+        <div class="card-header">
+            Menu Utama
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <a href="/siswa"
+                       class="btn btn-success w-100 menu-btn">
+
+                        👨‍🎓 Data Siswa
+
+                    </a>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <a href="/laporan"
+                       class="btn btn-primary w-100 menu-btn">
+
+                        📋 Laporan Absensi
+
+                    </a>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <a href="/mulai_absensi"
+                       class="btn btn-danger w-100 menu-btn">
+
+                        ▶ Mulai Absensi AI
+
+                    </a>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <a href="/stop_absensi"
+                       class="btn btn-secondary w-100 menu-btn">
+
+                        ⏹ Stop Absensi AI
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="text-center mt-4 text-muted">
+
+        Sistem Absensi AI © 2026
+
+    </div>
+
+</div>
+
+<script>
+    // State untuk toggle log
+    let isLogExpanded = true; // Default show (expanded)
+    let currentVisibleLogs = 2; // Default hanya 2 log terlihat
+    const totalLogs = {{ logs|length }};
+    
+    // Fungsi untuk toggle show/hide log
+    function toggleLog() {
+        const logContainer = document.getElementById('logContainer');
+        const toggleBtn = document.getElementById('toggleLogBtn');
+        const toggleIcon = document.getElementById('toggleIcon');
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        
+        if (isLogExpanded) {
+            // Hide logs - hanya tampilkan 2 teratas
+            hideExcessLogs();
+            logContainer.classList.add('collapsed');
+            toggleIcon.innerHTML = '▼';
+            toggleBtn.innerHTML = '<span id="toggleIcon">▼</span> Tampilkan Semua Log';
+            if(loadMoreBtn) loadMoreBtn.style.display = 'block';
+        } else {
+            // Show all logs
+            showAllLogs();
+            logContainer.classList.remove('collapsed');
+            toggleIcon.innerHTML = '▲';
+            toggleBtn.innerHTML = '<span id="toggleIcon">▲</span> Sembunyikan Log';
+            if(loadMoreBtn) loadMoreBtn.style.display = 'none';
+        }
+        isLogExpanded = !isLogExpanded;
+    }
+    
+    // Fungsi untuk menyembunyikan log lebih dari 2
+    function hideExcessLogs() {
+        const logItems = document.querySelectorAll('#logList .log-item');
+        if (logItems.length > 2) {
+            for (let i = 2; i < logItems.length; i++) {
+                logItems[i].style.display = 'none';
+            }
+        }
+        currentVisibleLogs = Math.min(2, logItems.length);
+    }
+    
+    // Fungsi untuk menampilkan semua log
+    function showAllLogs() {
+        const logItems = document.querySelectorAll('#logList .log-item');
+        logItems.forEach(item => {
+            item.style.display = 'block';
+        });
+        currentVisibleLogs = logItems.length;
+    }
+    
+    // Fungsi untuk load more logs (5 per klik)
+    let currentLoadCount = 2;
+    const loadStep = 5;
+    
+    function loadMoreLogs() {
+        const logItems = document.querySelectorAll('#logList .log-item');
+        const nextLoad = Math.min(currentLoadCount + loadStep, logItems.length);
+        
+        for (let i = currentLoadCount; i < nextLoad; i++) {
+            if (logItems[i]) {
+                logItems[i].style.display = 'block';
+                // Animasi fade in
+                logItems[i].style.opacity = '0';
+                setTimeout(() => {
+                    logItems[i].style.opacity = '1';
+                }, 50);
+            }
+        }
+        
+        currentLoadCount = nextLoad;
+        
+        // Update tombol load more
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (currentLoadCount >= logItems.length) {
+            loadMoreBtn.style.display = 'none';
+            // Tampilkan pesan "Semua log sudah ditampilkan"
+            const logContainer = document.getElementById('logContainer');
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'text-center text-muted py-2 small';
+            infoDiv.id = 'allLogsLoaded';
+            infoDiv.innerHTML = '✓ Semua log sudah ditampilkan';
+            if (!document.getElementById('allLogsLoaded')) {
+                loadMoreBtn.parentNode.appendChild(infoDiv);
+                setTimeout(() => {
+                    infoDiv.remove();
+                }, 3000);
+            }
+        }
+    }
+    
+    // Inisialisasi: hanya tampilkan 2 log pertama saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        if (totalLogs > 2) {
+            // Default: sembunyikan log lebih dari 2
+            hideExcessLogs();
+            const logContainer = document.getElementById('logContainer');
+            logContainer.classList.add('collapsed');
+            
+            // Tampilkan tombol load more
+            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            if (loadMoreBtn) {
+                loadMoreBtn.style.display = 'block';
+            }
+            
+            // Update tombol toggle
+            const toggleIcon = document.getElementById('toggleIcon');
+            const toggleBtn = document.getElementById('toggleLogBtn');
+            toggleIcon.innerHTML = '▼';
+            toggleBtn.innerHTML = '<span id="toggleIcon">▼</span> Tampilkan Semua Log';
+        }
+        
+        // Auto-refresh log setiap 10 detik (opsional)
+        setInterval(refreshLogs, 10000);
+    });
+    
+    // Fungsi untuk refresh logs via AJAX (opsional)
+    function refreshLogs() {
+        fetch('/get_latest_logs')
+            .then(response => response.json())
+            .then(data => {
+                if (data.logs && data.logs.length > 0) {
+                    updateLogList(data.logs);
+                }
+            })
+            .catch(err => console.log('Auto refresh error:', err));
+    }
+    
+    // Fungsi untuk update list log (opsional)
+    function updateLogList(newLogs) {
+        const logList = document.getElementById('logList');
+        const currentLogCount = document.querySelectorAll('#logList .log-item').length;
+        
+        if (newLogs.length > currentLogCount) {
+            // Ada log baru, reload page untuk update
+            location.reload();
+        }
+    }
+    
+    // Tambahkan tooltip untuk info
+    const toggleBtn = document.getElementById('toggleLogBtn');
+    if (toggleBtn) {
+        toggleBtn.title = "Klik untuk tampilkan/sembunyikan log lengkap";
+    }
+
+    function hapusLog(logId) {
+    if (confirm('Hapus log ini?')) {
+        fetch(`/hapus_log/${logId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hapus element dari DOM
+                const logItem = document.querySelector(`li[data-log-id="${logId}"]`);
+                if (logItem) {
+                    logItem.remove();
+                }
+                // Update counter
+                const logCount = document.querySelectorAll('#logList .log-item').length;
+                document.getElementById('logCount').innerText = `${logCount} log`;
+                
+                // Jika tidak ada log lagi, tampilkan pesan
+                if (logCount === 0) {
+                    location.reload();
+                }
+                
+                showToast('✅ Log berhasil dihapus', 'success');
+            } else {
+                showToast('❌ Gagal menghapus log', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            showToast('❌ Terjadi kesalahan', 'error');
+        });
+    }
+}
+
+// Hapus semua log
+function hapusSemuaLog() {
+    if (confirm('⚠️ PERINGATAN!\n\nMenghapus SEMUA log aktivitas.\n\nYakin ingin melanjutkan?')) {
+        fetch('/hapus_semua_log', {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`✅ ${data.message}`, 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showToast('❌ Gagal menghapus log', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            showToast('❌ Terjadi kesalahan', 'error');
+        });
+    }
+}
+
+// Fungsi toast notification (opsional)
+function showToast(message, type = 'success') {
+    // Buat toast container jika belum ada
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        `;
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Buat toast
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+    toast.style.cssText = `
+        min-width: 250px;
+        animation: slideInRight 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" style="float: right;"></button>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Auto remove setelah 3 detik
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Tambahkan CSS animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+`;
+document.head.appendChild(style);
+
+function hapusLogPerTanggal() {
+    const tanggal = document.getElementById('filterTanggalLog').value;
+    if (!tanggal) {
+        showToast('❌ Pilih tanggal terlebih dahulu!', 'error');
+        return;
+    }
+    
+    if (confirm(`⚠️ Hapus semua log pada tanggal ${tanggal}?\n\nYakin ingin melanjutkan?`)) {
+        fetch('/hapus_log_per_tanggal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tanggal: tanggal })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`✅ ${data.message}`, 'success');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showToast(`❌ ${data.message}`, 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            showToast('❌ Terjadi kesalahan', 'error');
+        });
+    }
+}
+</script>
+
+</body>
+</html>

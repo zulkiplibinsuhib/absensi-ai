@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Absensi - Sistem Absensi AI</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body{
+            background:#f4f6f9;
+        }
+
+        .dashboard-header{
+            background:linear-gradient(135deg,#0d6efd,#0dcaf0);
+            color:white;
+            border-radius:15px;
+            padding:30px;
+            margin-bottom:25px;
+        }
+
+        .btn-custom{
+            transition:.3s;
+        }
+
+        .btn-custom:hover{
+            transform:translateY(-2px);
+        }
+        
+        .stat-card{
+            border:none;
+            border-radius:15px;
+            transition:.3s;
+        }
+
+        .stat-card:hover{
+            transform:translateY(-5px);
+        }
+
+        .stat-number{
+            font-size:36px;
+            font-weight:bold;
+        }
+        
+        .filter-section {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .date-badge {
+            background: #0d6efd;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        .btn-filter {
+            background: #0d6efd;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .btn-filter:hover {
+            background: #0b5ed7;
+        }
+        
+        .btn-filter-active {
+            background: #198754;
+        }
+        
+        .btn-filter-active:hover {
+            background: #157347;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-4">
+
+    <div class="dashboard-header shadow">
+        <h1>📋 Laporan Absensi</h1>
+        <p class="mb-0">Rekap data kehadiran siswa</p>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">📅 Filter Berdasarkan Tanggal</label>
+                <input type="date" id="filterDate" class="form-control" value="{{ today }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">&nbsp;</label>
+                <button class="btn-filter w-100" onclick="filterByDate()">
+                    🔍 Tampilkan
+                </button>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">&nbsp;</label>
+                <button class="btn-filter btn-filter-active w-100" onclick="showAllData()">
+                    📋 Semua Data
+                </button>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">&nbsp;</label>
+                <button class="btn btn-danger w-100 btn-custom" onclick="hapusPerHari()" id="deleteDayBtn" style="display:none;">
+                    🗑️ Hapus Hari Ini
+                </button>
+            </div>
+        </div>
+        
+        <!-- Info filter -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <div id="filterInfo" class="alert alert-info mb-0" style="display:none;">
+                    <span id="filterMessage"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card shadow text-center">
+                <div class="card-body">
+                    <h5>Total Seluruh Absensi</h5>
+                    <div class="stat-number text-primary" id="totalAll">{{ total_absensi }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card shadow text-center">
+                <div class="card-body">
+                    <h5>Total Filter</h5>
+                    <div class="stat-number text-success" id="totalFilter">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card shadow text-center">
+                <div class="card-body">
+                    <h5>Hari Ini</h5>
+                    <div class="stat-number text-info" id="totalToday">{{ total_hari_ini }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4">
+        <a href="/" class="btn btn-secondary btn-custom">⬅️ Kembali ke Dashboard</a>
+    </div>
+    <br>
+    <div class="card shadow">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap">
+            <h5 class="mb-0">📊 Data Kehadiran</h5>
+            <div>
+                <button class="btn btn-sm btn-danger btn-custom me-2" onclick="hapusSemua()" id="deleteAllBtn">
+                    🗑️ Hapus Semua
+                </button>
+                <button class="btn btn-sm btn-warning btn-custom" onclick="exportToExcel()">
+                    📊 Export Excel
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="attendanceTable">
+                    <thead>
+                        <tr style="background:#0d6efd; color:white;">
+                            <th>ID</th>
+                            <th>Nama Siswa</th>
+                            <th>Tanggal</th>
+                            <th>Jam</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        {% for row in data %}
+                        <tr data-id="{{ row[0] }}" data-tanggal="{{ row[2] }}">
+                            <td>{{ row[0] }}</td>
+                            <td>{{ row[1] }}</td>
+                            <td>{{ row[2] }}</td>
+                            <td>{{ row[3] }}</td>
+                            <td>
+                                <a href="/absensi/hapus/{{ row[0] }}" 
+                                   class="btn btn-sm btn-danger btn-custom"
+                                   onclick="return confirm('Hapus absensi ini?')">
+                                    🗑️ Hapus
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr id="noDataRow">
+                            <td colspan="5" class="text-center text-muted py-4">
+                                Belum ada data absensi
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+    let currentFilter = 'all'; // 'all' or 'date'
+    let currentDate = '';
+    
+    // Filter by date
+    function filterByDate() {
+        const filterDate = document.getElementById('filterDate').value;
+        if (!filterDate) {
+            alert('Pilih tanggal terlebih dahulu!');
+            return;
+        }
+        
+        currentFilter = 'date';
+        currentDate = filterDate;
+        
+        fetch(`/get_absensi_by_date?tanggal=${filterDate}`)
+            .then(response => response.json())
+            .then(data => {
+                updateTable(data.data);
+                document.getElementById('totalFilter').innerText = data.total;
+                document.getElementById('filterInfo').style.display = 'block';
+                document.getElementById('filterMessage').innerHTML = `Menampilkan data absensi tanggal: <strong>${formatDate(filterDate)}</strong>`;
+                document.getElementById('deleteDayBtn').style.display = 'block';
+                document.getElementById('deleteDayBtn').innerHTML = `🗑️ Hapus Tanggal ${formatDate(filterDate)}`;
+                document.getElementById('deleteAllBtn').style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Gagal memuat data');
+            });
+    }
+    
+    // Show all data
+    function showAllData() {
+        currentFilter = 'all';
+        currentDate = '';
+        
+        fetch('/get_all_absensi')
+            .then(response => response.json())
+            .then(data => {
+                updateTable(data.data);
+                document.getElementById('totalFilter').innerText = data.total;
+                document.getElementById('filterInfo').style.display = 'none';
+                document.getElementById('deleteDayBtn').style.display = 'none';
+                document.getElementById('deleteAllBtn').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Gagal memuat data');
+            });
+    }
+    
+    // Update table
+    function updateTable(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Tidak ada data absensi</td></tr>';
+            return;
+        }
+        
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-id', row[0]);
+            tr.setAttribute('data-tanggal', row[2]);
+            tr.innerHTML = `
+                <td>${row[0]}</td>
+                <td>${row[1]}</td>
+                <td>${row[2]}</td>
+                <td>${row[3]}</td>
+                <td>
+                    <a href="/absensi/hapus/${row[0]}" 
+                       class="btn btn-sm btn-danger btn-custom"
+                       onclick="return confirm('Hapus absensi ini?')">
+                        🗑️ Hapus
+                    </a>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+    
+    // Delete all data
+    function hapusSemua() {
+        if (confirm('Yakin ingin menghapus SEMUA data absensi? Tindakan ini tidak dapat dibatalkan!')) {
+            fetch('/absensi/hapus_semua', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Semua data absensi berhasil dihapus');
+                        location.reload();
+                    } else {
+                        alert('Gagal menghapus data: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan');
+                });
+        }
+    }
+    
+    // Delete by day
+    function hapusPerHari() {
+        const tanggal = currentDate;
+        if (!tanggal) {
+            alert('Tidak ada tanggal yang dipilih');
+            return;
+        }
+        
+        if (confirm(`Yakin ingin menghapus SEMUA data absensi tanggal ${formatDate(tanggal)}? Tindakan ini tidak dapat dibatalkan!`)) {
+            fetch(`/absensi/hapus_per_hari?tanggal=${tanggal}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Berhasil menghapus ${data.deleted} data absensi tanggal ${formatDate(tanggal)}`);
+                        if (currentFilter === 'date') {
+                            filterByDate(); // Refresh filter
+                        } else {
+                            location.reload();
+                        }
+                    } else {
+                        alert('Gagal menghapus data: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan');
+                });
+        }
+    }
+    
+    // Export to Excel
+    function exportToExcel() {
+        let url = '';
+        if (currentFilter === 'date' && currentDate) {
+            url = `/export_excel?tanggal=${currentDate}`;
+        } else {
+            url = `/export_excel`;
+        }
+        window.location.href = url;
+    }
+    
+    // Format date
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const options = { day: 'numeric', month: 'long', year: 'numeric' };
+        return date.toLocaleDateString('id-ID', options);
+    }
+    
+    // Set today's date
+    document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
+</script>
+
+</body>
+</html>
