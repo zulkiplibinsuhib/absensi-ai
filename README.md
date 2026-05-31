@@ -158,3 +158,19 @@ Hapus per tanggal
 Hapus semua log
 Auto-refresh setiap 10 detik
 
+# DOKUMENTASI 
+Halaman Index
+<img width="1902" height="970" alt="image" src="https://github.com/user-attachments/assets/05844d7d-1314-451d-85fc-87f4a2bb03c6" />
+
+Manajemen Siswa
+<img width="1912" height="972" alt="image" src="https://github.com/user-attachments/assets/814cf9ab-9398-4918-abc0-4b156e357891" />
+
+Rekam Foto 
+<img width="1901" height="982" alt="image" src="https://github.com/user-attachments/assets/f32be312-4acf-4bab-a3d9-fad71b18c530" />
+
+Laporan 
+<img width="1906" height="977" alt="image" src="https://github.com/user-attachments/assets/8a3a6143-4082-44ac-851e-061b272a7f33" />
+
+
+
+
